@@ -1,11 +1,12 @@
-require('dotenv').config();
-
 const express = require('express');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
+require('dotenv').config();
 
 const app = express();
+
+app.use(express.static('public'));
 
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -33,7 +34,7 @@ passport.deserializeUser((obj, done) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>Home Page</h1><a href="/auth/google">Login with Google</a>');
+    res.sendFile(__dirname + '/public/index.html');
 });
 
 app.get('/auth/google',
@@ -51,12 +52,14 @@ app.get('/profile', (req, res) => {
     if (!req.isAuthenticated()) {
         return res.redirect('/');
     }
-    res.send(`<h1>Profile Page</h1><p>Hello ${req.user.displayName}!</p>`);
+    res.sendFile(__dirname + '/public/profile.html');
 });
 
-app.get('/logout', (req, res) => {
-    req.logout();
-    res.redirect('/');
+app.get('/api/user', (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    res.json(req.user);
 });
 
 app.listen(process.env.PORT, () => {
